@@ -44,24 +44,27 @@ def _decode_inference_indices(model, sess, output_infer,
   with codecs.getwriter("utf-8")(
       tf.gfile.GFile(output_infer, mode="wb")) as trans_f:
     trans_f.write("")  # Write empty string to ensure file is created.
-    for decode_id in inference_indices:
-      nmt_outputs, infer_summary = model.decode(sess)
 
-      # get text translation
-      assert nmt_outputs.shape[0] == 1
+    nmt_outputs, infer_summary = model.decode(sess)
+    assert nmt_outputs.shape[0] == len(inference_indices)
+
+    image_summ = None
+    if infer_summary is not None:
+        image_summ = tf.Summary()
+        image_summ.ParseFromString(infer_summary)
+
+    for sent_id, decode_id in enumerate(inference_indices):
       translation = nmt_utils.get_translation(
           nmt_outputs,
-          sent_id=0,
+          sent_id=sent_id,
           tgt_eos=tgt_eos,
           subword_option=subword_option)
 
-      if infer_summary is not None:  # Attention models
+      if image_summ is not None:  # Attention models
         image_file = output_infer_summary_prefix + str(decode_id) + ".png"
         utils.print_out("  save attention image to %s*" % image_file)
-        image_summ = tf.Summary()
-        image_summ.ParseFromString(infer_summary)
         with tf.gfile.GFile(image_file, mode="w") as img_f:
-          img_f.write(image_summ.value[0].image.encoded_image_string)
+          img_f.write(image_summ.value[sent_id].image.encoded_image_string)
 
       trans_f.write("%s\n" % translation)
       utils.print_out(translation + b"\n")
