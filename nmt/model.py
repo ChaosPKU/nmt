@@ -501,8 +501,13 @@ class BaseModel(object):
     if self.time_major:
       target_output = tf.transpose(target_output)
     max_time = self.get_max_time(target_output)
-    crossent = tf.nn.sparse_softmax_cross_entropy_with_logits(
-        labels=target_output, logits=logits)
+
+    labels = tf.one_hot(target_output, tf.shape(logits)[2])
+    crossent = tf.nn.softmax_cross_entropy_with_logits(
+                      labels=labels, logits=logits)
+    # crossent = tf.nn.sparse_softmax_cross_entropy_with_logits(
+    #     labels=target_output, logits=logits)
+
     target_weights = tf.sequence_mask(
         self.iterator.target_sequence_length, max_time, dtype=logits.dtype)
     if self.time_major:
