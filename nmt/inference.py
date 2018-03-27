@@ -28,6 +28,8 @@ from . import model_helper
 from .utils import misc_utils as utils
 from .utils import nmt_utils
 
+import numpy as np
+
 __all__ = ["load_data", "inference",
            "single_worker_inference", "multi_worker_inference"]
 
@@ -45,8 +47,9 @@ def _decode_inference_indices(model, sess, output_infer,
       tf.gfile.GFile(output_infer, mode="wb")) as trans_f:
     trans_f.write("")  # Write empty string to ensure file is created.
 
-    nmt_outputs, infer_summary = model.decode(sess)
+    nmt_outputs, (attention_tensor, infer_summary) = model.decode(sess)
     assert nmt_outputs.shape[0] == len(inference_indices)
+    np.save(output_infer_summary_prefix + '_attention.npy', attention_tensor)
 
     image_summ = None
     if infer_summary is not None:

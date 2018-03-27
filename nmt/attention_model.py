@@ -180,4 +180,4 @@ def _create_attention_images_summary(final_context_state):
   # Scale to range [0, 255]
   attention_images *= 255
   attention_summary = tf.summary.image("attention_images", attention_images)
-  return attention_summary
+  return attention_images, attention_summary
